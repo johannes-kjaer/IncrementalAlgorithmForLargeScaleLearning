@@ -34,3 +34,6 @@ class SVRG(OptimizationMethod):
 
     def stop_condition(self):
         return self.statistics.epoch_count >= self.max_epochs or sq_norm(self.mu_tilde) <= self.precision**2
+    
+    def __repr__(self):
+        return f"SVRG with η : {self.eta}, m : {self.m}"

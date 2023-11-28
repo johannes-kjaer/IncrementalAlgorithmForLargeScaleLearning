@@ -9,7 +9,7 @@ class OptimizationMethod:
     def __init__(self, f: Function, dim: int):
         self.f = f          # function to optimize
         self.dim = dim      # dimension of the values
-        self.statistics = Statistics()
+        self.statistics = Statistics(self)
         self.w = np.zeros(dim, dtype=DTYPE)     # solution of the optimization
 
     def count_step(self):

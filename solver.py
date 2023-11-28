@@ -1,10 +1,11 @@
 from optimization_method import OptimizationMethod
 import numpy as np
 from function import *
+from typing import Type
 
 
 class Solver:
-    def __init__(self, method: type):
+    def __init__(self, method: Type[OptimizationMethod]):
         self.method = method            # the method type to use, a subclass of OptimizationMethod
         self.solver: method = None      # the actual instance of this method type
         self.create_solver()
@@ -26,13 +27,12 @@ class Solver:
 
 
 class LinearRegressionSolver(Solver):
-    def __init__(self, X: np.array, Y: np.array, method: type):
+    def __init__(self, X: np.array, Y: np.array, method: Type[OptimizationMethod]):
         self.X = X
         self.Y = Y
         self.m = self.X.shape[1]    # dimension of the values
         super().__init__(method)
 
     def create_solver(self):
-        loss_functions = [Quadratic(x, y) for (x, y) in zip(self.X, self.Y)]
-        loss_function = FiniteSumFunction(loss_functions)
+        loss_function = QuadraticSum(self.X, self.Y)
         self.solver = self.method(loss_function, self.m)
