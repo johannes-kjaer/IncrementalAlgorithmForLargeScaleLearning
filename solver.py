@@ -16,13 +16,13 @@ class Solver:
     def solve(self):
         self.solver.solve()
 
-    def get_sol(self):
+    def get_sol(self) -> np.array:
         return self.solver.w
 
-    def get_grad(self):
+    def get_grad(self) -> np.array:
         return self.solver.f.gradient(self.solver.w)
 
-    def get_stats(self):
+    def get_stats(self) -> Statistics:
         return self.solver.statistics
 
 

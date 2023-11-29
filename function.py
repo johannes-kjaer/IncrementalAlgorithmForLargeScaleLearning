@@ -18,7 +18,7 @@ class Function:
             def evaluate(s, w):
                 return self.evaluate(w) + other.evaluate(w)
             def gradient(s, w):
-                return s.gradient(w) + other.gradient(w)
+                return self.gradient(w) + other.gradient(w)
         return Sum()
 
     def __mul__(self, other):
@@ -30,9 +30,9 @@ class Function:
                     return self.evaluate(w) * other
             def gradient(s, w):
                 if isinstance(other, Function):
-                    return s.gradient(w) * other.evaluate(w) + s.evaluate(w) * other.gradient(w)
+                    return self.gradient(w) * other.evaluate(w) + self.evaluate(w) * other.gradient(w)
                 else:
-                    return self.evaluate(w) * other
+                    return self.gradient(w) * other
         return Prod()
 
     def __rmul__(self, other):
@@ -82,7 +82,7 @@ class Quadratic(Function):
 
 class QuadraticSum(FiniteSumFunction):
     """
-    of the form ||Xw - Y||^2
+    of the form 1/n * ||Xw - Y||^2
     """
     def __init__(self, X: np.array, Y: np.array):
         self.X = X
@@ -97,25 +97,56 @@ class QuadraticSum(FiniteSumFunction):
         return 1/self.n * 2 * (self.X @ w - self.Y) @ self.X
 
 
-# def regularize(FuncType: Type[Function]):
-#     class RegularizedFunction(FuncType):
-#         def __init__(self, *args, **kwargs):
-#             if "l" not in kwargs:
-#                 raise KeyError("Regularized function constructor must get a 'l' keyword argument")
-#             self.l = kwargs["l"]
-#             super().__init__(*args, **kwargs)
-
-#         def evaluate(self, w: np.array) -> DTYPE:
-#             return super().evaluate(w) + self.l * sq_norm(w)
-
-#         def gradient(self, w: np.array) -> np.array:
-#             return super().gradient(w) + 2 * self.l * w
-
-#         def __getitem__(self, item):
-#             if not isinstance(self, FiniteSumFunction):
-#                 raise TypeError(f"{repr(FuncType)} object is not subscriptable")
-#             return super().__getitem__(item) + self.l * Function.make(evaluate=sq_norm, gradient=lambda w: 2*w)
-#     return RegularizedFunction
+class LogLikelihood(Function):
+    """
+    of the form log(1 + exp(-y(w.x)))
+    """
+    def __init__(self, x: np.array, y: int):
+        self.x = x
+        self.y = y
+    
+    def evaluate(self, w: np.array) -> DTYPE:
+        return np.log(1 + np.exp(-self.y * w @ self.x))
+    
+    def gradient(self, w: np.array):
+        exp = np.exp(-self.y * w @ self.x)
+        return -self.y * self.x * exp / (1 + exp)
 
 
-# RegularizedQuadratic = regularize(Quadratic)
+def regularize(FuncType: Type[Function]):
+    class RegularizedFunction(FuncType):
+        def __init__(self, *args, **kwargs):
+            if "l" not in kwargs:
+                raise KeyError("Regularized function constructor must get an 'l' keyword argument")
+            self.l = kwargs["l"]
+            kwargs.pop("l")
+            super().__init__(*args, **kwargs)
+
+        def evaluate(self, w: np.array) -> DTYPE:
+            return super().evaluate(w) + self.l * sq_norm(w)
+
+        def gradient(self, w: np.array) -> np.array:
+            return super().gradient(w) + 2 * self.l * w
+
+        def __getitem__(self, item):
+            if not isinstance(self, FiniteSumFunction):
+                raise TypeError(f"{repr(FuncType)} object is not subscriptable")
+            return super().__getitem__(item) + self.l * Function.make(evaluate=sq_norm, gradient=lambda w: 2*w)
+    return RegularizedFunction
+
+
+RegularizedQuadratic = regularize(Quadratic)
+
+
+class DummyFunction(Function):
+    def evaluate(self, w: np.array):
+        return DTYPE(0)
+    
+    def gradient(self, w: np.array):
+        return np.zeros(w.shape, dtype=DTYPE)
+
+
+class DummySumFunction(FiniteSumFunction):
+    def __init__(self, n: int = 2):
+        components = [DummyFunction() for _ in range(n)]
+        super().__init__(components)
