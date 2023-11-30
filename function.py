@@ -4,13 +4,13 @@ from common import *
 
 
 class Function:
-    def evaluate(self, w: np.array) -> DTYPE:
+    def evaluate(self, w: np.ndarray) -> DTYPE:
         return DTYPE(0)
 
-    def __call__(self, w: np.array):
+    def __call__(self, w: np.ndarray):
         return self.evaluate(w)
 
-    def gradient(self, w: np.array) -> np.array:
+    def gradient(self, w: np.ndarray) -> np.ndarray:
         return np.array([], dtype=DTYPE)
 
     def __add__(self, other):
@@ -52,10 +52,10 @@ class FiniteSumFunction(Function):
         self.components = components
         self.n = len(self.components)
 
-    def evaluate(self, w: np.array) -> DTYPE:
+    def evaluate(self, w: np.ndarray) -> DTYPE:
         return DTYPE(1/self.n * sum(f.evaluate(w) for f in self.components))
 
-    def gradient(self, w: np.array) -> np.array:
+    def gradient(self, w: np.ndarray) -> np.ndarray:
         return 1/self.n * sum(f.gradient(w) for f in self.components)
 
     def __getitem__(self, i: int):
@@ -65,18 +65,34 @@ class FiniteSumFunction(Function):
         return len(self.components)
 
 
+class DummyFunction(Function):
+    """for testing"""
+    def evaluate(self, w: np.ndarray):
+        return DTYPE(0)
+    
+    def gradient(self, w: np.ndarray):
+        return np.zeros(w.shape, dtype=DTYPE)
+
+
+class DummySumFunction(FiniteSumFunction):
+    """for testing"""
+    def __init__(self, n: int = 2):
+        components = [DummyFunction() for _ in range(n)]
+        super().__init__(components)
+
+
 class Quadratic(Function):
     """
     of the form (w.x - y)^2
     """
-    def __init__(self, x: np.array, y: DTYPE):
+    def __init__(self, x: np.ndarray, y: DTYPE):
         self.x = x
         self.y = y
 
-    def evaluate(self, w: np.array) -> DTYPE:
+    def evaluate(self, w: np.ndarray) -> DTYPE:
         return (w @ self.x - self.y)**2
 
-    def gradient(self, w: np.array) -> np.array:
+    def gradient(self, w: np.ndarray) -> np.ndarray:
         return 2 * (w @ self.x - self.y) * self.x
 
 
@@ -84,16 +100,16 @@ class QuadraticSum(FiniteSumFunction):
     """
     of the form 1/n * ||Xw - Y||^2
     """
-    def __init__(self, X: np.array, Y: np.array):
+    def __init__(self, X: np.ndarray, Y: np.ndarray):
         self.X = X
         self.Y = Y
         components = [Quadratic(x, y) for (x, y) in zip(self.X, self.Y)]
         super().__init__(components)
 
-    def evaluate(self, w: np.array) -> DTYPE:
+    def evaluate(self, w: np.ndarray) -> DTYPE:
         return 1/self.n * sq_norm(self.X @ w - self.Y)
 
-    def gradient(self, w: np.array):
+    def gradient(self, w: np.ndarray) -> np.ndarray:
         return 1/self.n * 2 * (self.X @ w - self.Y) @ self.X
 
 
@@ -101,31 +117,66 @@ class LogLikelihood(Function):
     """
     of the form log(1 + exp(-y(w.x)))
     """
-    def __init__(self, x: np.array, y: int):
+    def __init__(self, x: np.ndarray, y: int):
         self.x = x
         self.y = y
     
-    def evaluate(self, w: np.array) -> DTYPE:
+    def evaluate(self, w: np.ndarray) -> DTYPE:
         return np.log(1 + np.exp(-self.y * w @ self.x))
     
-    def gradient(self, w: np.array):
+    def gradient(self, w: np.ndarray):
         exp = np.exp(-self.y * w @ self.x)
         return -self.y * self.x * exp / (1 + exp)
 
 
-def regularize(FuncType: Type[Function]):
+class LogisticRegressionDual(Function):
+    """
+    From max'maxent' paper, of the form
+            \‾‾             \‾‾
+    ½αᵀQα + /__ αᵢlog(αᵢ) + /__ (C - αᵢ)log(C - αᵢ)
+           i:αᵢ>0          i:αᵢ<C
+    """
+    def __init__(self, C: float, Q: np.ndarray):
+        self.C = C
+        self.Q = Q
+    
+    @staticmethod
+    def extract_positive(v: np.ndarray, default: DTYPE = 1):
+        """return an array w with w[i] = v[i] if v[i] > 0 else default"""
+        return (v > 0)*v + (v <= 0)*np.ones(len(v))*default
+    
+    def evaluate(self, alpha):
+        positive_alpha = self.extract_positive(alpha)
+        less_than_C_alpha = self.extract_positive(self.C-alpha)
+        return 0.5 * alpha @ self.Q @ alpha + np.sum(alpha * np.log(positive_alpha)) + np.sum((self.C - alpha) * np.log(less_than_C_alpha))
+    
+    def gradient(self, alpha):
+        positive_alpha = self.extract_positive(alpha)
+        less_than_C_alpha = self.extract_positive(self.C-alpha)
+        return self.Q @ alpha + (np.log(positive_alpha) + 1) * (alpha > 0) - (np.log(less_than_C_alpha) + 1) * (alpha < self.C)
+
+
+def regularized(FuncType: Type[Function]):
     class RegularizedFunction(FuncType):
+        """
+        Of the form w --> f(w) + l||w||^2.
+        The constructor must get an 'l' keyword (otherwise a non regularized function is returned)
+        """
+        def __new__(cls, *args, **kwargs):
+            if "l" not in kwargs or kwargs["l"] == 0:
+                if "l" in kwargs: kwargs.pop("l")
+                return FuncType(*args, **kwargs)
+            return super().__new__(cls)
+        
         def __init__(self, *args, **kwargs):
-            if "l" not in kwargs:
-                raise KeyError("Regularized function constructor must get an 'l' keyword argument")
             self.l = kwargs["l"]
             kwargs.pop("l")
             super().__init__(*args, **kwargs)
 
-        def evaluate(self, w: np.array) -> DTYPE:
+        def evaluate(self, w: np.ndarray) -> DTYPE:
             return super().evaluate(w) + self.l * sq_norm(w)
 
-        def gradient(self, w: np.array) -> np.array:
+        def gradient(self, w: np.ndarray) -> np.ndarray:
             return super().gradient(w) + 2 * self.l * w
 
         def __getitem__(self, item):
@@ -135,18 +186,6 @@ def regularize(FuncType: Type[Function]):
     return RegularizedFunction
 
 
-RegularizedQuadratic = regularize(Quadratic)
-
-
-class DummyFunction(Function):
-    def evaluate(self, w: np.array):
-        return DTYPE(0)
-    
-    def gradient(self, w: np.array):
-        return np.zeros(w.shape, dtype=DTYPE)
-
-
-class DummySumFunction(FiniteSumFunction):
-    def __init__(self, n: int = 2):
-        components = [DummyFunction() for _ in range(n)]
-        super().__init__(components)
+RegularizedQuadratic = regularized(Quadratic)
+RegularizedQuadraticSum = regularized(QuadraticSum)
+RegularizedLogLikelihood = regularized(LogLikelihood)
