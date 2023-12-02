@@ -35,7 +35,10 @@ class Statistics:
         self.times.append(time.time())
 
     def plot_gradient_norm(self):
-        plt.plot(list(range(self.epoch_count+1)), self.gradient_norms)
+        #plt.plot(list(range(self.epoch_count+1)), self.gradient_norms)
+        plt.plot(np.arange(self.epoch_count+1), self.gradient_norms)
+        plt.xlabel('Epochs')
+        plt.ylabel('Gradient norm')
 
     def plot_duration(self):
         durations = [self.times[i+1]-self.times[i] for i in range(self.epoch_count-1)]

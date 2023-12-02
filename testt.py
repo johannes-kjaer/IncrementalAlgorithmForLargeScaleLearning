@@ -12,8 +12,8 @@ def main():
     w = np.array([random.random() for _ in range(m)], dtype=DTYPE)
     Y = X @ w
 
-    eta = 0.01
-    max_epochs = 100
+    eta = 0.001
+    max_epochs = 1000
     precision = 10**-5
     my_SGD = lambda f, dim: SGD(f, dim, eta=eta, max_epochs=max_epochs, precision=precision)
     my_SVRG = lambda f, dim: SVRG(f, dim, m=2*n, eta=eta, max_epochs=max_epochs, precision=precision)

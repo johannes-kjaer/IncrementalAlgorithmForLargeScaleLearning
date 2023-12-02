@@ -15,20 +15,20 @@ class SAGA(OptimizationMethod):
         self.precision = precision
         self.current_gradient = self.f.gradient(self.w)
         self.statistics.gradient_norms.append(sq_norm(self.current_gradient))
-        self.g = np.zeros((self.n,dim))
+        self.g = np.zeros((self.n,dim), dtype=np.double)
 
     def step(self, i):
         super().count_step()
-        current_sg = self.f[i].gradient(self.w) # Computing the gradient
-        self.w = self.w - self.eta * (current_sg - self.g[i,:] + np.sum(self.g,axis=0)) # Doing on SAGA parameter update
-        self.g[i,:] = current_sg # Updating the table entry of the gradient
+        current_sg = self.f[i].gradient(self.w) # Computing the stochastic gradient
+        self.w = self.w - self.eta * (current_sg - self.g[i] + np.sum(self.g,axis=0) / self.n) # Doing on SAGA parameter update
+        self.g[i] = current_sg # Updating the table entry of the gradient
     
     def epoch(self):
         random_seq = np.random.permutation(self.n)
         for i in random_seq:
             self.step(i)
         self.current_gradient = self.f.gradient(self.w)
-        self.count_epoch()
+        self.count_epoch(sq_norm(self.current_gradient))
     
     def stop_condition(self):
         return self.statistics.epoch_count >= self.max_epochs or sq_norm(self.current_gradient) <= self.precision**2
