@@ -9,8 +9,8 @@ class SAGA(OptimizationMethod):
     Stochastic Average Gradient Augmented
     """
 
-    def __init__(self, f: FiniteSumFunction, dim: int, eta: float = 1.0, max_epochs: int = INF, precision: float = 0.0):
-        super().__init__(f, dim)
+    def __init__(self, f: FiniteSumFunction, dim: int, eta: float = 1.0, max_epochs: int = INF, precision: float = 0.0, keep_gradient: bool=True):
+        super().__init__(f, dim, keep_gradient)
         self.eta = eta  # the learning rate
         self.n = len(f)  # size of the data set
         self.max_epochs = max_epochs
@@ -35,7 +35,7 @@ class SAGA(OptimizationMethod):
         random_seq = np.random.permutation(self.n)
         for i in random_seq:
             self.step(i)
-        self.current_gradient = self.f.gradient(self.w)
+        self.current_gradient = self.get_gradient()
         self.count_epoch(sq_norm(self.current_gradient))
 
     def stop_condition(self):

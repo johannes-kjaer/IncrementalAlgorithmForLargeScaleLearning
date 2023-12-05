@@ -9,7 +9,7 @@ class SVRG(OptimizationMethod):
     Stochastic Variance Reduced Gradient
     """
     def __init__(self, f: FiniteSumFunction, dim: int, m: int, eta: float = 1.0, max_epochs: int = INF, precision: float = 0.0):
-        super().__init__(f, dim)
+        super().__init__(f, dim, True)
         self.w_tilde = np.zeros(self.dim, dtype=DTYPE)
         self.m = m          # update frequency
         self.eta = eta      # the learning rate
@@ -29,7 +29,7 @@ class SVRG(OptimizationMethod):
             i = random.randint(0, self.n-1)
             self.step(i)
         self.w_tilde = self.w
-        self.mu_tilde = self.f.gradient(self.w_tilde)
+        self.mu_tilde = self.get_gradient(self.w_tilde)
         self.count_epoch(sq_norm(self.mu_tilde))
 
     def stop_condition(self):

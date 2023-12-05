@@ -44,31 +44,32 @@ def predicted_label(x: np.ndarray, w: np.ndarray):
 def logistic_regression_test():
     m = 100      # dimension of the values
     n = 1000      # size of the data set
-    X, cov, mean = generateRandomData(m, n)
-    X, Y, cov, mean = generateCompleteData(m, n, ratio=0)
+    X_train, Y_train, X_test, Y_test, cov, mean = generateCompleteData(m, n, ratio=0)
 
-    max_epochs = 100
+    max_epochs = 20
     precision = 10**-5
-    C = 0.0001
+    C = 0.00001
     eta = 0.00001
     l = 1/(2*C)
     l = 0.0
+    keep_gradient = True
     
-    my_SGD = lambda f, dim: SGD(f, dim, eta=eta, max_epochs=max_epochs, precision=precision)
+    my_SGD = lambda f, dim: SGD(f, dim, eta=eta, max_epochs=max_epochs, precision=precision, keep_gradient=keep_gradient)
     my_SVRG = lambda f, dim: SVRG(f, dim, m=2*n, eta=eta, max_epochs=max_epochs, precision=precision)
-    my_SAGA = lambda f, dim: SAGA(f, dim, eta=eta, max_epochs=max_epochs, precision=precision)
-    my_SDCA = lambda: SDCA(X=X, Y=Y, C=C, max_epochs=max_epochs, precision=precision, keep_Q=True)
+    my_SAGA = lambda f, dim: SAGA(f, dim, eta=eta, max_epochs=max_epochs, precision=precision, keep_gradient=keep_gradient)
+    my_SDCA = lambda: SDCA(X=X_train, Y=Y_train, C=C, max_epochs=max_epochs, precision=precision, keep_Q=False, keep_gradient=keep_gradient)
 
     methods = {"sgd": my_SGD, "svrg": my_SVRG, "saga": my_SAGA, "sdca": my_SDCA}
     method = "svrg" if len(sys.argv) < 2 else sys.argv[1]
     if method == "sdca":
-        solver = SDCASolver(X, Y, my_SDCA)
+        solver = SDCASolver(X_train, Y_train, my_SDCA)
     else:
-        solver = LogisticRegressionSolver(X, Y, methods[method], l=l)
+        solver = LogisticRegressionSolver(X_train, Y_train, methods[method], l=l)
     solver.solve()
     stats: Statistics = solver.get_stats()
     print(stats)
     print("Training error :", solver.training_error())
+    print("Testing error :", solver.error(X_test, Y_test))
     # print("Real w: ", w)
     # print("Approximated w: ", solver.get_w())
     plt.yscale("log")

@@ -25,7 +25,7 @@ class SDCA(OptimizationMethod):
     where Qᵢⱼ = yᵢyⱼxᵢᵀxⱼ
     (wasted way too much time formating this)
     """
-    def __init__(self, X: np.ndarray, Y: np.ndarray, C: float = 0.0, max_epochs: int = INF, precision: float = 0.0, keep_Q: bool=False):
+    def __init__(self, X: np.ndarray, Y: np.ndarray, C: float = 0.0, max_epochs: int = INF, precision: float = 0.0, keep_Q: bool=False, keep_gradient: bool=True):
         self.keep_Q = keep_Q
         if self.keep_Q:
             self.Q = (Y[np.newaxis].T @ Y[np.newaxis]) * (X @ X.T)
@@ -33,7 +33,7 @@ class SDCA(OptimizationMethod):
         else:
             f = LogisticRegressionPrimal(X, Y, C)
         dim = X.shape[1]
-        super().__init__(f, dim)
+        super().__init__(f, dim, keep_gradient)
         self.n = X.shape[0]     # size of the data set
         self.X = X
         self.Y = Y
@@ -45,7 +45,7 @@ class SDCA(OptimizationMethod):
         self.w = np.sum((self.alpha*Y) * X.T, axis=1)
         self.max_epochs = max_epochs
         self.precision = precision
-        self.current_gradient = self.f.gradient(self.alpha) if self.keep_Q else self.f.gradient(self.w)
+        self.current_gradient = self.get_gradient(self.alpha if self.keep_Q else self.w)
         self.statistics.gradient_norms.append(sq_norm(self.current_gradient))
 
     def modified_newton_method(self, a, b, c1, c2):
@@ -84,7 +84,7 @@ class SDCA(OptimizationMethod):
     def epoch(self):
         for i in range(self.n):
             self.step(i)
-        self.current_gradient = self.f.gradient(self.alpha) if self.keep_Q else self.f.gradient(self.w)
+        self.current_gradient = self.get_gradient(self.alpha if self.keep_Q else self.w)
         self.count_epoch(sq_norm(self.current_gradient))
     
     def stop_condition(self):

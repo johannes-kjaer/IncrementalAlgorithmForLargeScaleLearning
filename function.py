@@ -142,8 +142,8 @@ class LogisticRegressionPrimal(Function):
         return self.C * np.sum(np.log(1 + np.exp(-self.Y * self.X@w))) + 0.5 * sq_norm(w)
     
     def gradient(self, w):
-        exp = np.exp(-self.Y * self.X@w)
-        return self.C * np.sum(1/(1+exp)*exp * (-self.Y*self.X), axis=1)
+        exp = np.exp(-self.Y[np.newaxis].T * self.X@w)
+        return self.C * np.sum((1/(1+exp)*exp)[np.newaxis].T * (-self.Y[np.newaxis].T*self.X), axis=1)
 
 
 class LogisticRegressionDual(Function):
