@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.stats import ortho_group
 
 
 def generateRandomCovMatrix(n):
@@ -7,6 +8,26 @@ def generateRandomCovMatrix(n):
     A = rng.standard_normal((n, n))  
     #A = np.random.rand(n, n)
     return A @ A.T
+
+def generateRandomCovMAtrix2(dim):
+    rng = np.random.default_rng()
+    
+    Sigma = np.diag(rng.uniform(low=0.0, high=10.0, size=dim))
+    U = ortho_group.rvs(dim=dim)
+    cov = U @ Sigma @ U.T
+
+    return cov
+
+def generateRandomData2(dim, n_samples, corr = 0.1):
+    makeCorrelated = corr * np.ones((dim,dim))
+    makeCorrelated[0,:] = np.ones(dim)
+
+    uncorrdata = np.random.multivariate_normal(np.zeros(dim), np.identity(dim), n_samples)
+
+    corrData = makeCorrelated @ uncorrdata
+
+    return corrData
+
 
 
 def generateRandomData(dim, nb_samples, ratio=0.0, mean=None, cov=None):
