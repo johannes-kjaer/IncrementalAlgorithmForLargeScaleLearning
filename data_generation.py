@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.stats import ortho_group
 
 
 def generateRandomCovMatrix(n):
@@ -7,6 +8,26 @@ def generateRandomCovMatrix(n):
     A = rng.standard_normal((n, n))  
     #A = np.random.rand(n, n)
     return A @ A.T
+
+def generateRandomCovMAtrix2(dim):
+    rng = np.random.default_rng()
+    
+    Sigma = np.diag(rng.uniform(low=0.0, high=10.0, size=dim))
+    U = ortho_group.rvs(dim=dim)
+    cov = U @ Sigma @ U.T
+
+    return cov
+
+def generateRandomData2(dim, n_samples, corr = 0.1):
+    makeCorrelated = corr * np.ones((dim,dim))
+    makeCorrelated += (1-corr) * np.identity(dim)
+
+    uncorrdata = np.random.multivariate_normal(np.zeros(dim), np.identity(dim), n_samples)
+
+    corrData = makeCorrelated @ uncorrdata
+
+    return corrData
+
 
 
 def generateRandomData(dim, nb_samples, ratio=0.0, mean=None, cov=None):
@@ -36,6 +57,7 @@ def generateRandomData(dim, nb_samples, ratio=0.0, mean=None, cov=None):
 def probability(x: np.ndarray, y: int, w: np.ndarray):
     return 1 / (1 + np.exp(-y * w @ x))
 
+
 def predicted_label(x: np.ndarray, w: np.ndarray):
     return 1 if probability(x, 1, w) > 0.5 else -1
 
@@ -55,3 +77,13 @@ def generateCompleteData(dim, nb_samples, ratio=0.0, mean=None, cov=None, w=None
     X_train, Y_train = X[:test_index], Y[:test_index]
     X_test, Y_test = X[test_index:], Y[test_index:]
     return X_train, Y_train, X_test, Y_test, cov, mean
+
+def generateCompleteData2(dim, nb_samples, corr =0.1, w=None):
+    X = generateRandomData2(dim, nb_samples, corr)
+    if w is None:
+        w = np.random.rand(dim)
+    Y = generateLabels(X, w)
+    test_index = nb_samples - nb_samples // 10
+    X_train, Y_train = X[:test_index], Y[:test_index]
+    X_test, Y_test = X[test_index:], Y[test_index:]
+    return X_train, Y_train, X_test, Y_test
