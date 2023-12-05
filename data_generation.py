@@ -77,3 +77,13 @@ def generateCompleteData(dim, nb_samples, ratio=0.0, mean=None, cov=None, w=None
     X_train, Y_train = X[:test_index], Y[:test_index]
     X_test, Y_test = X[test_index:], Y[test_index:]
     return X_train, Y_train, X_test, Y_test, cov, mean
+
+def generateCompleteData2(dim, nb_samples, corr =0.1, w=None):
+    X = generateRandomData2(dim, nb_samples, corr)
+    if w is None:
+        w = np.random.rand(dim)
+    Y = generateLabels(X, w)
+    test_index = nb_samples - nb_samples // 10
+    X_train, Y_train = X[:test_index], Y[:test_index]
+    X_test, Y_test = X[test_index:], Y[test_index:]
+    return X_train, Y_train, X_test, Y_test
