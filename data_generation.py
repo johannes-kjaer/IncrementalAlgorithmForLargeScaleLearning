@@ -20,7 +20,7 @@ def generateRandomCovMAtrix2(dim):
 
 def generateRandomData2(dim, n_samples, corr = 0.1):
     makeCorrelated = corr * np.ones((dim,dim))
-    makeCorrelated[0,:] = np.ones(dim)
+    makeCorrelated += (1-corr) * np.identity(dim)
 
     uncorrdata = np.random.multivariate_normal(np.zeros(dim), np.identity(dim), n_samples)
 
