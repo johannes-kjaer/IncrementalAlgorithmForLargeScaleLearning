@@ -33,7 +33,7 @@ class Statistics:
 
     def start(self):
         self.start_time = time.time()
-        print(f"Epoch {self.epoch_count}", end="")
+        print(f"Epoch {self.epoch_count}", end="", flush=True)
 
     def stop(self):
         print()
@@ -47,7 +47,7 @@ class Statistics:
         self.gradient_norms.append(gradient_norm)
         self.times.append(time.time())
         print("\r", end="")
-        print(f"Epoch {self.epoch_count}", end="")
+        print(f"Epoch {self.epoch_count}", end="", flush=True)
 
     def plot_gradient_norm(self):
         plt.plot(list(range(self.epoch_count+1)), self.gradient_norms)

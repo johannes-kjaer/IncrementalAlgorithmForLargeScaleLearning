@@ -1,11 +1,12 @@
 from optimization_method import OptimizationMethod
+from sdca import SDCA
 import numpy as np
 from function import *
 from typing import Type
 
 
 class Solver:
-    def __init__(self, X: np.array, Y: np.array, method: Type[OptimizationMethod], l: float = 0.0):
+    def __init__(self, X: np.ndarray, Y: np.ndarray, method: Type[OptimizationMethod], l: float = 0.0):
         self.X = X
         self.Y = Y
         self.m = self.X.shape[1]        # dimension of the values
@@ -20,10 +21,10 @@ class Solver:
     def solve(self):
         self.solver.solve()
 
-    def get_w(self) -> np.array:
+    def get_w(self) -> np.ndarray:
         return self.solver.w
 
-    def get_grad(self) -> np.array:
+    def get_grad(self) -> np.ndarray:
         return self.solver.f.gradient(self.solver.w)
 
     def get_stats(self) -> Statistics:
@@ -45,10 +46,10 @@ class LogisticRegressionSolver(Solver):
         loss_function = FiniteSumFunction(loss_functions)
         self.solver = self.method(loss_function, self.m)
     
-    def probability(self, x: np.array, y: np.array):
+    def probability(self, x: np.ndarray, y: int):
         return 1 / (1 + np.exp(-y * self.solver.w @ x))
     
-    def predicted_label(self, x: np.array):
+    def predicted_label(self, x: np.ndarray):
         return 1 if self.probability(x, 1) > 0.5 else -1
     
     def error(self, X, Y):
@@ -62,3 +63,7 @@ class LogisticRegressionSolver(Solver):
     def training_error(self):
         return self.error(self.X, self.Y)
     
+
+class SDCASolver(LogisticRegressionSolver):
+    def create_solver(self):
+        self.solver = self.method()

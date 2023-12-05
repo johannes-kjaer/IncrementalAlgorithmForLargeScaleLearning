@@ -21,7 +21,7 @@ class SAGA(OptimizationMethod):
         self.grad_sum = np.zeros(dim, dtype=DTYPE)
 
     def step(self, i):
-        super().count_step()
+        self.count_step()
         current_sg = self.f[i].gradient(self.w)  # Computing the gradient
         self.w = self.w - self.eta * (
                     current_sg - self.g[i] + 1/self.n * self.grad_sum)#np.sum(self.g, axis=0))  # Doing on SAGA parameter update
@@ -42,4 +42,4 @@ class SAGA(OptimizationMethod):
         return self.statistics.epoch_count >= self.max_epochs or sq_norm(self.current_gradient) <= self.precision ** 2
     
     def __repr__(self):
-        return f"SAGA with η : {self.eta}"
+        return f"SAGA with η = {self.eta}"

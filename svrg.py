@@ -20,7 +20,7 @@ class SVRG(OptimizationMethod):
         self.statistics.gradient_norms.append(sq_norm(self.mu_tilde))
 
     def step(self, i):
-        super().count_step()
+        self.count_step()
         self.w = self.w - self.eta * (self.f[i].gradient(self.w) - self.f[i].gradient(self.w_tilde) + self.mu_tilde)
 
     def epoch(self):
@@ -36,4 +36,4 @@ class SVRG(OptimizationMethod):
         return self.statistics.epoch_count >= self.max_epochs or sq_norm(self.mu_tilde) <= self.precision**2
     
     def __repr__(self):
-        return f"SVRG with η : {self.eta}, m : {self.m}"
+        return f"SVRG with η = {self.eta}, m = {self.m}"

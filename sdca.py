@@ -25,23 +25,27 @@ class SDCA(OptimizationMethod):
     where Qᵢⱼ = yᵢyⱼxᵢᵀxⱼ
     (wasted way too much time formating this)
     """
-    def __init__(self, X: np.ndarray, Y: np.ndarray, dim: int, C: float = 0.0, eta: float = 1.0, max_epochs: int = INF, precision: float = 0.0):
-        self.Q = (Y[np.newaxis].T @ Y[np.newaxis]) * (X.T @ X)
-        f = LogisticRegressionDual(C, self.Q)
+    def __init__(self, X: np.ndarray, Y: np.ndarray, C: float = 0.0, max_epochs: int = INF, precision: float = 0.0):
+        self.keep_Q = False
+        if self.keep_Q:
+            self.Q = (Y[np.newaxis].T @ Y[np.newaxis]) * (X @ X.T)
+            f = LogisticRegressionDual(C, self.Q)
+        else:
+            f = DummyFunction()
+        dim = X.shape[1]
         super().__init__(f, dim)
+        self.n = X.shape[0]     # size of the data set
         self.X = X
         self.Y = Y
         self.C = C      # regularization parameter
         self.xi = 0.25  # TODO: how to choose xi ? what is xi ?
         epsilon1, epsilon2 = 0.1, 0.1   # TODO: how to choose epsilon1, epsilon2 ?
-        self.alpha: np.ndarray = min(epsilon1*C, epsilon2) * np.ones(dim, dtype=DTYPE)   # solution to the dual problem
+        self.alpha: np.ndarray = min(epsilon1*C, epsilon2) * np.ones(self.n, dtype=DTYPE)   # solution to the dual problem
         self.alpha_prime: np.ndarray = C - self.alpha
         self.w = np.sum((self.alpha*Y) * X.T, axis=1)
-        self.eta = eta      # the learning rate
-        self.n = X.shape[0]     # size of the data set
         self.max_epochs = max_epochs
         self.precision = precision
-        self.current_gradient = self.f.gradient(self.alpha)
+        self.current_gradient = self.f.gradient(self.alpha) if self.keep_Q else np.array([100, 100])
         self.statistics.gradient_norms.append(sq_norm(self.current_gradient))
 
     def modified_newton_method(self, a, b, c1, c2):
@@ -50,14 +54,18 @@ class SDCA(OptimizationMethod):
         s = c1 + c2
         z_m = (c2 - c1) / 2
         t = 0 if z_m >= -b/a else 1
-        g_prime = lambda Zt: np.log(Zt/(s-Zt)) + a(Zt-c_[t]) + b_[t]
-        g_doubleprime = lambda Zt: a + s / (Zt(s-Zt))
-        Zt = s/2  # choose in (0, s) ?
+        g_prime = lambda Zt: np.log(Zt/(s-Zt)) + a*(Zt-c_[t]) + b_[t]
+        g_doubleprime = lambda Zt: a + s / (Zt*(s-Zt))
+        xi0 = 0.25  # how to choose xi0
+        if t == 0:
+            Zt = (xi0*c1) if c1 >= s/2 else c1
+        else:
+            Zt = (xi0*c2) if c2 >= s/2 else c2
         while True:
-            if g_prime(Zt) == 0:
+            if abs(g_prime(Zt)) <= 10**-12:
                 break
-            d = g_prime(Zt) / g_doubleprime(Zt)
-            Zt = self.xi * Zt if Zt + d <= 0 else Zt + d
+            d = -g_prime(Zt) / g_doubleprime(Zt)
+            Zt = (self.xi * Zt) if Zt + d <= 0 else Zt + d
         Z = [0, 0]
         Z[t] = Zt
         Z[1-t] = s-Zt
@@ -66,7 +74,7 @@ class SDCA(OptimizationMethod):
     def step(self, i):
         c1 = self.alpha[i]
         c2 = self.alpha_prime[i]
-        a = self.Q[i, i]
+        a = sq_norm(self.X[i])  #self.Q[i, i]
         b = self.Y[i] * self.w @ self.X[i]
         Z1, Z2 = self.modified_newton_method(a, b, c1, c2)
         self.w += (Z1 - self.alpha[i]) * self.Y[i] * self.X[i]
@@ -76,8 +84,14 @@ class SDCA(OptimizationMethod):
     def epoch(self):
         for i in range(self.n):
             self.step(i)
-        self.current_gradient = self.f.gradient(self.alpha)
+        self.current_gradient = self.f.gradient(self.alpha) if self.keep_Q else np.array([100, 100])
         self.count_epoch(sq_norm(self.current_gradient))
+    
+    def stop_condition(self):
+        return self.statistics.epoch_count >= self.max_epochs or sq_norm(self.current_gradient) <= self.precision**2
+    
+    def __repr__(self):
+        return f"SDCA with C = {self.C}"
 
 
 # class SDCA(OptimizationMethod):

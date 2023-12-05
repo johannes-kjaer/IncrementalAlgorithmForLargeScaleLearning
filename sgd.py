@@ -18,7 +18,7 @@ class SGD(OptimizationMethod):
         self.statistics.gradient_norms.append(sq_norm(self.current_gradient))
 
     def step(self, i):
-        super().count_step()
+        self.count_step()
         eta = self.eta  # / self.statistics.step_count
         self.w = self.w - eta * self.f[i].gradient(self.w)
 
@@ -33,4 +33,4 @@ class SGD(OptimizationMethod):
         return self.statistics.epoch_count >= self.max_epochs or sq_norm(self.current_gradient) <= self.precision**2
     
     def __repr__(self):
-        return f"SGD with η : {self.eta}"
+        return f"SGD with η = {self.eta}"
