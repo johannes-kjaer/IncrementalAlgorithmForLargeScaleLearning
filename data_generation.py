@@ -36,7 +36,6 @@ def generateRandomData(dim, nb_samples, ratio=0.0, mean=None, cov=None):
 def probability(x: np.ndarray, y: int, w: np.ndarray):
     return 1 / (1 + np.exp(-y * w @ x))
 
-
 def predicted_label(x: np.ndarray, w: np.ndarray):
     return 1 if probability(x, 1, w) > 0.5 else -1
 

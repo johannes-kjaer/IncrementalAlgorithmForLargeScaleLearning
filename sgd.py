@@ -23,8 +23,10 @@ class SGD(OptimizationMethod):
         self.w = self.w - eta * self.f[i].gradient(self.w)
 
     def epoch(self):
-        random_seq = np.random.permutation(self.n)
-        for i in random_seq:
+        # random_seq = np.random.permutation(self.n)
+        # for i in random_seq:
+        for _ in range(self.n):
+            i = random.randint(0, self.n-1)
             self.step(i)
         self.current_gradient = self.get_gradient()
         self.count_epoch(sq_norm(self.current_gradient))
@@ -33,4 +35,8 @@ class SGD(OptimizationMethod):
         return self.statistics.epoch_count >= self.max_epochs or sq_norm(self.current_gradient) <= self.precision**2
     
     def __repr__(self):
-        return f"SGD with η = {self.eta}"
+        if hasattr(self.f[0], "l"):
+            l = self.f[0].l
+        else:
+            l = 0
+        return f"SGD with η = {self.eta}, λ = {l}"

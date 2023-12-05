@@ -5,7 +5,7 @@ from typing import Callable
 
 
 INF = 10**100
-DTYPE = np.float32
+DTYPE = np.float64
 
 
 def sq_norm(x: np.array):
@@ -30,6 +30,8 @@ class Statistics:
         self.stop_time = 0.0
         self.gradient_norms = []
         self.times = []
+        self.training_error = 0.0
+        self.testing_error = 0.0
 
     def start(self):
         self.start_time = time.time()
@@ -39,6 +41,9 @@ class Statistics:
         print()
         self.stop_time = time.time()
 
+    def get_time(self):
+        return self.stop_time - self.start_time
+    
     def step(self):
         self.step_count += 1
 

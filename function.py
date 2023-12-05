@@ -1,5 +1,6 @@
 from typing import List, Type
 import numpy as np
+import math
 from common import *
 
 
@@ -20,6 +21,14 @@ class Function:
             def gradient(s, w):
                 return self.gradient(w) + other.gradient(w)
         return Sum()
+    
+    def __sub__(self, other):
+        class Diff(Function):
+            def evaluate(s, w):
+                return self.evaluate(w) - other.evaluate(w)
+            def gradient(s, w):
+                return self.gradient(w) - other.gradient(w)
+        return Diff()
 
     def __mul__(self, other):
         class Prod(Function):
@@ -117,21 +126,46 @@ class LogLikelihood(Function):
     """
     of the form log(1 + exp(-y(w.x)))
     """
-    def __init__(self, x: np.ndarray, y: int):
+    def __init__(self, x: np.ndarray, y: int, use_numpy: bool=False):
         self.x = x
         self.y = y
+        self.use_numpy = use_numpy
     
     def evaluate(self, w: np.ndarray) -> DTYPE:
         return np.log(1 + np.exp(-self.y * w @ self.x))
     
-    def gradient(self, w: np.ndarray):
+    def gradient(self, w: np.ndarray, use_numpy: bool=None):
+        if use_numpy is None:
+            use_numpy = self.use_numpy
+        if not use_numpy:
+            w_x = sum(a*b for a, b in zip(w, self.x))
+            exp = np.exp(-self.y * w_x)
+            return -self.y * self.x * exp / (1+exp)
         exp = np.exp(-self.y * w @ self.x)
         return -self.y * self.x * exp / (1 + exp)
 
 
+class LogLikelihood2(Function):
+    def __init__(self, x, y, C):
+        self.x = x
+        self.y = y
+        self.C = C
+    
+    def evaluate(self, w):
+        return self.C * np.log(1 + np.exp(-self.y * w @ self.x)) + 0.5 * sq_norm(w)
+    
+    def gradient(self, w):
+        exp = np.exp(-self.y * w @ self.x)
+        return self.C * (-self.y) * self.x * exp/ (1 + exp)
+
+
 class LogisticRegressionPrimal(Function):
     """
-    of the form
+    From 'maxent' paper, of the form
+                  n
+                 \‾‾
+    min P(w) = C /__ log(1 + exp(-yᵢwᵀxᵢ)) + ½║w║²
+     ʷ           i=1
     """
     def __init__(self, X, Y, C: float):
         self.X = X
@@ -143,12 +177,12 @@ class LogisticRegressionPrimal(Function):
     
     def gradient(self, w):
         exp = np.exp(-self.Y[np.newaxis].T * self.X@w)
-        return self.C * np.sum((1/(1+exp)*exp)[np.newaxis].T * (-self.Y[np.newaxis].T*self.X), axis=1)
+        return self.C * np.sum((1/(1+exp)*exp)[np.newaxis].T * (-self.Y[np.newaxis].T*self.X), axis=0)
 
 
 class LogisticRegressionDual(Function):
     """
-    From max'maxent' paper, of the form
+    From 'maxent' paper, of the form
             \‾‾             \‾‾
     ½αᵀQα + /__ αᵢlog(αᵢ) + /__ (C - αᵢ)log(C - αᵢ)
            i:αᵢ>0          i:αᵢ<C

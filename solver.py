@@ -53,6 +53,8 @@ class LogisticRegressionSolver(Solver):
         return 1 if self.probability(x, 1) > 0.5 else -1
     
     def error(self, X, Y):
+        absolute_error = sum(self.predicted_label(x) != y for (x, y) in zip(X, Y))
+        return absolute_error / len(Y)
         errors = [0, 0]
         for (x, y) in zip(X, Y):
             errors[0 if y == 1 else 1] += (self.predicted_label(x) != y)

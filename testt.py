@@ -35,24 +35,17 @@ def main():
     plt.show()
 
 
-def probability(x: np.ndarray, y: int, w: np.ndarray):
-    return 1 / (1 + np.exp(-y * w @ x))
-
-def predicted_label(x: np.ndarray, w: np.ndarray):
-    return 1 if probability(x, 1, w) > 0.5 else -1
-
 def logistic_regression_test():
-    m = 100      # dimension of the values
-    n = 1000      # size of the data set
-    X_train, Y_train, X_test, Y_test, cov, mean = generateCompleteData(m, n, ratio=0)
-
-    max_epochs = 20
+    m = 1000      # dimension of the values
+    n = 10000      # size of the data set
+    X_train, Y_train, X_test, Y_test, cov, mean = generateCompleteData(m, n, ratio=10)
+    max_epochs = 10
     precision = 10**-5
-    C = 0.00001
+    C = 0.0001
     eta = 0.00001
-    l = 1/(2*C)
-    l = 0.0
-    keep_gradient = True
+    l = 1/(2*C*X_train.shape[0])
+    #l = 0.0
+    keep_gradient = False
     
     my_SGD = lambda f, dim: SGD(f, dim, eta=eta, max_epochs=max_epochs, precision=precision, keep_gradient=keep_gradient)
     my_SVRG = lambda f, dim: SVRG(f, dim, m=2*n, eta=eta, max_epochs=max_epochs, precision=precision)

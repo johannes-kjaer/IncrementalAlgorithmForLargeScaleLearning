@@ -10,10 +10,10 @@ class SDCA(OptimizationMethod):
     primal of the form :
     min p(w) = C * sum_{i=1 to n} log(1 + exp(-yᵢwᵀxᵢ)) + ½║w║²
     primal :
-                n
-               \‾‾
-    min P(w) = /__ log(1 + exp(-yᵢwᵀxᵢ)) + ½║w║²
-     ʷ         i=1
+                  n
+                 \‾‾
+    min P(w) = C /__ log(1 + exp(-yᵢwᵀxᵢ)) + ½║w║²
+     ʷ           i=1
 
 
     dual :
@@ -32,6 +32,8 @@ class SDCA(OptimizationMethod):
             f = LogisticRegressionDual(C, self.Q)
         else:
             f = LogisticRegressionPrimal(X, Y, C)
+            loss_functions = [LogLikelihood2(x, y, C) for (x, y) in zip(X, Y)]
+            #f = FiniteSumFunction(loss_functions)# - LogisticRegressionPrimal(X, Y, C)
         dim = X.shape[1]
         super().__init__(f, dim, keep_gradient)
         self.n = X.shape[0]     # size of the data set
@@ -75,7 +77,7 @@ class SDCA(OptimizationMethod):
         c1 = self.alpha[i]
         c2 = self.alpha_prime[i]
         a = sq_norm(self.X[i])  #self.Q[i, i]
-        b = self.Y[i] * self.w @ self.X[i]
+        b = self.Y[i] * sum(a*b for a, b in zip(self.w, self.X[i]))  #self.w @ self.X[i]
         Z1, Z2 = self.modified_newton_method(a, b, c1, c2)
         self.w += (Z1 - self.alpha[i]) * self.Y[i] * self.X[i]
         self.alpha[i] = Z1
