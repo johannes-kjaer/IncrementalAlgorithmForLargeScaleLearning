@@ -9,7 +9,7 @@ from data_generation import *
 import sys
 
 
-def compare(X_train, Y_train, X_test, Y_test, max_epochs, precision, eta, C, l, repetitions=10):
+def compare(X_train, Y_train, X_test, Y_test, max_epochs, precision, eta, C, l, repetitions=5):
     def compute(keep_gradient, reps):
         my_SGD = lambda f, dim: SGD(f, dim, eta=eta, max_epochs=max_epochs, precision=precision, keep_gradient=keep_gradient)
         my_SVRG = lambda f, dim: SVRG(f, dim, m=2*n, eta=eta, max_epochs=max_epochs, precision=precision)
@@ -49,15 +49,15 @@ def compare(X_train, Y_train, X_test, Y_test, max_epochs, precision, eta, C, l, 
     print("testing_errors = ", testing_errors)
 
 
-
 def generate_comparison():
-    m = 10      # dimension of the values
-    n = 100      # size of the data set
+    m = 250      # dimension of the values
+    n = 2500      # size of the data set
     X_train, Y_train, X_test, Y_test, cov, mean = generateCompleteData(m, n, ratio=10)
     max_epochs = 50
     precision = 10**-5
-    C = 1/n
-    l = 1/(2*C*n)
+    l = 0.5
+    C = 1/(2*l*n)
+    #l = 1/(2*C*n)
     eta = 0.00001
     
     compare(X_train, Y_train, X_test, Y_test, max_epochs, precision, eta, C, l)
