@@ -50,12 +50,13 @@ def compare(X_train, Y_train, X_test, Y_test, max_epochs, precision, eta, C, l, 
 
 
 def generate_comparison():
-    m = 250      # dimension of the values
-    n = 2500      # size of the data set
-    X_train, Y_train, X_test, Y_test, cov, mean = generateCompleteData(m, n, ratio=10)
+    m = 100      # dimension of the values
+    n = 1000      # size of the data set
+    correlation = 0.005
+    X_train, Y_train, X_test, Y_test = generateCompleteData2(m, n, correlation)
     max_epochs = 50
     precision = 10**-5
-    l = 0.5
+    l = 2
     C = 1/(2*l*n)
     #l = 1/(2*C*n)
     eta = 0.00001

@@ -19,12 +19,12 @@ def generateRandomCovMAtrix2(dim):
     return cov
 
 def generateRandomData2(dim, n_samples, corr = 0.1):
-    makeCorrelated = corr * np.ones((dim,dim))
-    makeCorrelated += (1-corr) * np.identity(dim)
+    makeCorrelated = corr * np.ones((dim,dim), dtype=np.double)
+    makeCorrelated += (1-corr) * np.identity(dim, dtype=np.double)
 
     uncorrdata = np.random.multivariate_normal(np.zeros(dim), np.identity(dim), n_samples)
 
-    corrData = makeCorrelated @ uncorrdata
+    corrData = uncorrdata @ makeCorrelated
 
     return corrData
 
