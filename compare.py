@@ -5,7 +5,8 @@ from saga import *
 from sdca import *
 import matplotlib.pyplot as plt
 from mnist import MnistDataloader
-from data_generation import *
+#from data_generation import *
+from newDataGeneration import *
 import sys
 
 
@@ -52,8 +53,9 @@ def compare(X_train, Y_train, X_test, Y_test, max_epochs, precision, eta, C, l, 
 def generate_comparison():
     m = 100      # dimension of the values
     n = 1000      # size of the data set
-    correlation = 0.005
-    X_train, Y_train, X_test, Y_test = generateCompleteData2(m, n, correlation)
+    c1 = 1 
+    c2 = 2
+    X_train, Y_train, X_test, Y_test, cov = newGenerateCompleteData(m, n, c1, c2)
     max_epochs = 50
     precision = 10**-5
     l = 2

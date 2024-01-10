@@ -52,6 +52,30 @@ def testDataGeneration():
     eVals = np.diag(L)
 
     print(cov)
-    
+
     display_data(data, V, eVals)
+
+
+def probability(x: np.ndarray, y: int, w: np.ndarray):
+    return 1 / (1 + np.exp(-y * w @ x))
+
+
+def predicted_label(x: np.ndarray, w: np.ndarray):
+    return 1 if probability(x, 1, w) > 0.5 else -1
+
+def generateLabels(X, w, sigma=0.1):
+    rng = np.random.default_rng()
+    dim = X.shape[1]
+    return np.array([predicted_label(x, w + sigma*rng.standard_normal(dim)) for x in X])
+
+
+def newGenerateCompleteData(dim, nb_samples, c1, c2, w=None):
+    X, cov, V, L = mulitnormalRandomData(nb_samples, dim, c1, c2)
+    if w is None:
+        w = np.random.rand(dim)
+    Y = generateLabels(X, w)
+    test_index = nb_samples - nb_samples // 10
+    X_train, Y_train = X[:test_index], Y[:test_index]
+    X_test, Y_test = X[test_index:], Y[test_index:]
+    return X_train, Y_train, X_test, Y_test, cov
 
