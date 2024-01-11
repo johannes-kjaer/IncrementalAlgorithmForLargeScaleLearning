@@ -173,7 +173,7 @@ class LogisticRegressionPrimal(Function):
         self.C = C
     
     def evaluate(self, w):
-        return self.C * np.sum(np.log(1 + np.exp(-self.Y * self.X@w))) + 0.5 * sq_norm(w)
+        return self.C * np.sum(np.log(1 + np.exp(-self.Y[np.newaxis].T * self.X@w))) + 0.5 * sq_norm(w)
     
     def gradient(self, w):
         exp = np.exp(-self.Y[np.newaxis].T * self.X@w)

@@ -29,6 +29,9 @@ class Solver:
 
     def get_stats(self) -> Statistics:
         return self.solver.statistics
+    
+    def error(self, X: np.ndarray, Y: np.ndarray) -> float:
+        return 0.0
 
 
 class LinearRegressionSolver(Solver):
