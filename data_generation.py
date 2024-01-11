@@ -1,11 +1,12 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.stats import ortho_group
+from typing import Callable
+#from scipy.stats import ortho_group
 
 
 def generateRandomCovMatrix(n):
     rng = np.random.default_rng()
-    A = rng.standard_normal((n, n))  
+    A = rng.standard_normal((n, n))
     #A = np.random.rand(n, n)
     return A @ A.T
 
@@ -62,13 +63,35 @@ def predicted_label(x: np.ndarray, w: np.ndarray):
     return 1 if probability(x, 1, w) > 0.5 else -1
 
 
-def generateLabels(X, w, sigma=0.1):
+def generateLabels(X: np.ndarray, w: np.ndarray, sigma=0.1):
+    """sigma is the amount of noise"""
     rng = np.random.default_rng()
     dim = X.shape[1]
     return np.array([predicted_label(x, w + sigma*rng.standard_normal(dim)) for x in X])
 
 
-def generateCompleteData(dim, nb_samples, ratio=0.0, mean=None, cov=None, w=None):
+def generateCompleteData(dim: int, nb_samples: int, w: np.ndarray=None, sample_generator: Callable=None, label_generator: Callable=None, **kwargs):
+    if sample_generator is None:
+        sample_generator = lambda dim, nb_samples: np.random.rand(nb_samples, dim)
+    if label_generator is None:
+        label_generator = generateLabels
+    data = sample_generator(dim, nb_samples, **kwargs)
+    if isinstance(data, tuple):
+        X = data[0]
+        additional_data = data[1:]
+    else:
+        X = data
+        additional_data = tuple()
+    if w is None:
+        w = np.random.rand(dim)
+    Y = label_generator(X, w)
+    test_index = nb_samples - nb_samples // 10
+    X_train, Y_train = X[:test_index], Y[:test_index]
+    X_test, Y_test = X[test_index:], Y[test_index:]
+    return X_train, Y_train, X_test, Y_test, w, additional_data
+
+
+def generateCompleteData_old(dim, nb_samples, ratio=0.0, mean=None, cov=None, w=None):
     X, cov, mean = generateRandomData(dim, nb_samples, ratio, mean, cov)
     if w is None:
         w = np.random.rand(dim)
@@ -77,6 +100,7 @@ def generateCompleteData(dim, nb_samples, ratio=0.0, mean=None, cov=None, w=None
     X_train, Y_train = X[:test_index], Y[:test_index]
     X_test, Y_test = X[test_index:], Y[test_index:]
     return X_train, Y_train, X_test, Y_test, cov, mean
+
 
 def generateCompleteData2(dim, nb_samples, corr =0.1, w=None):
     X = generateRandomData2(dim, nb_samples, corr)

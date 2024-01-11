@@ -35,7 +35,7 @@ class SDCA(OptimizationMethod):
             loss_functions = [LogLikelihood2(x, y, C) for (x, y) in zip(X, Y)]
             #f = FiniteSumFunction(loss_functions)# - LogisticRegressionPrimal(X, Y, C)
         dim = X.shape[1]
-        super().__init__(f, dim, keep_gradient)
+        super().__init__(f, dim, max_epochs, precision, keep_gradient)
         self.n = X.shape[0]     # size of the data set
         self.X = X
         self.Y = Y
@@ -45,10 +45,7 @@ class SDCA(OptimizationMethod):
         self.alpha: np.ndarray = min(epsilon1*C, epsilon2) * np.ones(self.n, dtype=DTYPE)   # solution to the dual problem
         self.alpha_prime: np.ndarray = C - self.alpha
         self.w = np.sum((self.alpha*Y) * X.T, axis=1)
-        self.max_epochs = max_epochs
-        self.precision = precision
-        self.current_gradient = self.get_gradient(self.alpha if self.keep_Q else self.w)
-        self.statistics.gradient_norms.append(sq_norm(self.current_gradient))
+        self.start(self.alpha if self.keep_Q else self.w)
 
     def modified_newton_method(self, a, b, c1, c2):
         b_ = [b, -b]
@@ -87,10 +84,7 @@ class SDCA(OptimizationMethod):
         for i in range(self.n):
             self.step(i)
         self.current_gradient = self.get_gradient(self.alpha if self.keep_Q else self.w)
-        self.count_epoch(sq_norm(self.current_gradient))
-    
-    def stop_condition(self):
-        return self.statistics.epoch_count >= self.max_epochs or sq_norm(self.current_gradient) <= self.precision**2
+        self.count_epoch()
     
     def __repr__(self):
         return f"SDCA with C = {self.C}"

@@ -126,7 +126,7 @@ class LogLikelihood(Function):
     """
     of the form log(1 + exp(-y(w.x)))
     """
-    def __init__(self, x: np.ndarray, y: int, use_numpy: bool=False):
+    def __init__(self, x: np.ndarray, y: int, use_numpy: bool=True):
         self.x = x
         self.y = y
         self.use_numpy = use_numpy

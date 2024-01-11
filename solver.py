@@ -46,14 +46,16 @@ class LogisticRegressionSolver(Solver):
         loss_function = FiniteSumFunction(loss_functions)
         self.solver = self.method(loss_function, self.m)
     
-    def probability(self, x: np.ndarray, y: int):
-        return 1 / (1 + np.exp(-y * self.solver.w @ x))
+    def probability(self, x: np.ndarray, y: int, w: np.ndarray=None):
+        if w is None:
+            w = self.solver.w
+        return 1 / (1 + np.exp(-y * w @ x))
     
-    def predicted_label(self, x: np.ndarray):
-        return 1 if self.probability(x, 1) > 0.5 else -1
+    def predicted_label(self, x: np.ndarray, w: np.ndarray=None):
+        return 1 if self.probability(x, 1, w) > 0.5 else -1
     
-    def error(self, X, Y):
-        absolute_error = sum(self.predicted_label(x) != y for (x, y) in zip(X, Y))
+    def error(self, X, Y, w=None):
+        absolute_error = sum(self.predicted_label(x, w) != y for (x, y) in zip(X, Y))
         return absolute_error / len(Y)
         errors = [0, 0]
         for (x, y) in zip(X, Y):
@@ -62,8 +64,8 @@ class LogisticRegressionSolver(Solver):
         errors[1] /= np.count_nonzero(Y-1)
         return errors
     
-    def training_error(self):
-        return self.error(self.X, self.Y)
+    def training_error(self, w=None):
+        return self.error(self.X, self.Y, w)
     
 
 class SDCASolver(LogisticRegressionSolver):

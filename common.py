@@ -29,6 +29,7 @@ class Statistics:
         self.start_time = 0.0
         self.stop_time = 0.0
         self.gradient_norms = []
+        self.objective_values = []
         self.times = []
         self.training_error = 0.0
         self.testing_error = 0.0
@@ -47,15 +48,23 @@ class Statistics:
     def step(self):
         self.step_count += 1
 
-    def epoch(self, gradient_norm: float):
+    def epoch(self, gradient_norm: float, objective_value: float):
         self.epoch_count += 1
         self.gradient_norms.append(gradient_norm)
+        self.objective_values.append(objective_value)
         self.times.append(time.time())
         print("\r", end="")
         print(f"Epoch {self.epoch_count}", end="", flush=True)
 
     def plot_gradient_norm(self):
         plt.plot(list(range(self.epoch_count+1)), self.gradient_norms)
+        plt.xlabel("Epochs")
+        plt.ylabel("Gradient squared norm")
+    
+    def plot_objective_function(self):
+        plt.plot(list(range(self.epoch_count+1)), self.objective_values)
+        plt.xlabel("Epochs")
+        plt.ylabel("Objective function")
 
     def plot_duration(self):
         durations = [self.times[i+1]-self.times[i] for i in range(self.epoch_count-1)]

@@ -9,7 +9,7 @@ from data_generation import *
 import sys
 
 
-def compare(X_train, Y_train, X_test, Y_test, max_epochs, precision, eta, C, l, repetitions=5):
+def compare(X_train, Y_train, X_test, Y_test, max_epochs, precision, eta, C, l, repetitions=3):
     def compute(keep_gradient, reps):
         my_SGD = lambda f, dim: SGD(f, dim, eta=eta, max_epochs=max_epochs, precision=precision, keep_gradient=keep_gradient)
         my_SVRG = lambda f, dim: SVRG(f, dim, m=2*n, eta=eta, max_epochs=max_epochs, precision=precision)
@@ -39,19 +39,22 @@ def compare(X_train, Y_train, X_test, Y_test, max_epochs, precision, eta, C, l, 
     times =  {}
     training_errors = {}
     testing_errors = {}
+    epoch_counts = {}
     for method in methods:
         res = results_no_gradient[method]
         times[method] = sum(s.get_time() for s in res) / len(res)
         training_errors[method] = sum(s.training_error for s in res) / len(res)
         testing_errors[method] = sum(s.testing_error for s in res) / len(res)
+        epoch_counts[method] = sum(s.epoch_count for s in res) / len(res)
     print("times = ", times)
     print("training_errors = ", training_errors)
     print("testing_errors = ", testing_errors)
+    print("epoch_counts = ", epoch_counts)
 
 
 def generate_comparison():
-    m = 250      # dimension of the values
-    n = 2500      # size of the data set
+    m = 100      # dimension of the values
+    n = 1000      # size of the data set
     X_train, Y_train, X_test, Y_test, cov, mean = generateCompleteData(m, n, ratio=10)
     max_epochs = 50
     precision = 10**-5

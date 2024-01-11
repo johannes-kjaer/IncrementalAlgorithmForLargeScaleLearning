@@ -10,15 +10,12 @@ class SAGA(OptimizationMethod):
     """
 
     def __init__(self, f: FiniteSumFunction, dim: int, eta: float = 1.0, max_epochs: int = INF, precision: float = 0.0, keep_gradient: bool=True):
-        super().__init__(f, dim, keep_gradient)
+        super().__init__(f, dim, max_epochs, precision, keep_gradient)
         self.eta = eta  # the learning rate
         self.n = len(f)  # size of the data set
-        self.max_epochs = max_epochs
-        self.precision = precision
-        self.current_gradient = self.f.gradient(self.w)
-        self.statistics.gradient_norms.append(sq_norm(self.current_gradient))
         self.g = np.zeros((self.n, dim))
         self.grad_sum = np.zeros(dim, dtype=DTYPE)
+        self.start()
 
     def step(self, i):
         self.count_step()
@@ -36,10 +33,7 @@ class SAGA(OptimizationMethod):
         for i in random_seq:
             self.step(i)
         self.current_gradient = self.get_gradient()
-        self.count_epoch(sq_norm(self.current_gradient))
-
-    def stop_condition(self):
-        return self.statistics.epoch_count >= self.max_epochs or sq_norm(self.current_gradient) <= self.precision ** 2
+        self.count_epoch()
     
     def __repr__(self):
         return f"SAGA with η = {self.eta}"

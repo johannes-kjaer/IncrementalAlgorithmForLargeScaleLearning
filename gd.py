@@ -2,10 +2,9 @@ from function import *
 import random
 from optimization_method import *
 from common import *
-import math
 
 
-class SGD(OptimizationMethod):
+class GD(OptimizationMethod):
     """
     Stochastic Gradient Descent
     """
@@ -16,23 +15,14 @@ class SGD(OptimizationMethod):
         self.n = len(f)     # size of the data set
         self.start()
 
-    def step(self, i):
-        self.count_step()
-        eta = self.eta  / math.sqrt(self.statistics.step_count)
-        self.w = self.w - eta * self.f[i].gradient(self.w)
-
     def epoch(self):
-        # random_seq = np.random.permutation(self.n)
-        # for i in random_seq:
-        for _ in range(self.n):
-            i = random.randint(0, self.n-1)
-            self.step(i)
-        self.current_gradient = self.get_gradient()
+        self.w -= self.eta * self.current_gradient
+        self.current_gradient = self.f.gradient(self.w)
         self.count_epoch()
-
+    
     def __repr__(self):
         if hasattr(self.f[0], "l"):
             l = self.f[0].l
         else:
             l = 0
-        return f"SGD with η = {self.eta}, λ = {l}"
+        return f"GD with η = {self.eta}, λ = {l}"
