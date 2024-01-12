@@ -18,7 +18,7 @@ class SGD(OptimizationMethod):
 
     def step(self, i):
         self.count_step()
-        eta = self.eta  / math.sqrt(self.statistics.step_count)
+        eta = self.eta / math.sqrt(self.statistics.step_count)
         self.w = self.w - eta * self.f[i].gradient(self.w)
 
     def epoch(self):

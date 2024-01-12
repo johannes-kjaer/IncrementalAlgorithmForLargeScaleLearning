@@ -36,4 +36,8 @@ class SAGA(OptimizationMethod):
         self.count_epoch()
     
     def __repr__(self):
-        return f"SAGA with η = {self.eta}"
+        if hasattr(self.f[0], "l"):
+            l = self.f[0].l
+        else:
+            l = 0
+        return f"SAGA with η = {self.eta}, λ = {l}"

@@ -13,6 +13,15 @@ def sq_norm(x: np.array):
     return x @ x
 
 
+def float_range(start: float, end: float, step: float):
+    """not strict"""
+    dir = 1 if step > 0 else -1
+    x = start
+    while dir*x <= dir*end:
+        yield x
+        x += step
+
+
 def get_method_from_user_input():
     method = "gd" if len(sys.argv) < 2 else sys.argv[1]
     return method
@@ -64,13 +73,13 @@ class Statistics:
         print("\r", end="")
         print(f"{Statistics.EPOCH_PRINT_PREFIX}Epoch {self.epoch_count}", end="", flush=True)
 
-    def plot_gradient_norm(self):
-        plt.plot(list(range(self.epoch_count+1)), self.gradient_norms)
+    def plot_gradient_norm(self, label=""):
+        plt.plot(list(range(self.epoch_count+1)), self.gradient_norms, label="")
         plt.xlabel("Epochs")
         plt.ylabel("Gradient squared norm")
     
-    def plot_objective_function(self):
-        plt.plot(list(range(self.epoch_count+1)), self.objective_values)
+    def plot_objective_function(self, label: str=""):
+        plt.plot(list(range(self.epoch_count+1)), self.objective_values, label=label)
         plt.xlabel("Epochs")
         plt.ylabel("Objective function")
 
